@@ -152,26 +152,24 @@ fn parseHuffmanTable(reader: *JpgReader) void {
             print("    Numb of codes of len {d: <9}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ i, "Li", "u8", l_i, l_i });
             for (cl) |c| {
                 if (c) |v| {
-                    //print("      {s: <28}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ "Value assoc w Huff code:", "Vij", "u8", v, v });
+                    print("      {s: <28}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ "Value assoc w Huff code:", "Vij", "u8", v, v });
                     const cd = table.get(v).?;
                     const numb_bits = numberOfUsedBits(cd);
                     var code_str = std.ArrayList(u8).init(allocator);
-                    for (1..numb_bits) |j| {
-                        const offset = numb_bits - j - 1;
-                        const b = (cd >> @intCast(offset)) & 1;
+                    for (0..numb_bits - 1) |b| {
                         if (b == 0) {
-                            code_str.append('0') catch unreachable;
+                            code_str.append('0');
                         } else {
-                            code_str.append('1') catch unreachable;
+                            code_str.append('1');
                         }
                     }
                     print("        {s: <10}  {d: >2},  {s},    {d: >2}, {s}: {s}\n", .{
-                        "SSSS: (Vij)",
+                        "SSSS:",
                         v,
                         "Code:",
                         cd,
                         "Code:",
-                        code_str.items,
+                        code_str,
                     });
                 }
             }
