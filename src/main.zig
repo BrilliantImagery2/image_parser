@@ -73,6 +73,9 @@ pub fn main() !void {
             @intFromEnum(Marker.DHT) => {
                 parseHuffmanTable(&reader);
             },
+            @intFromEnum(Marker.SOS) => {
+                parseScanHeader(&reader);
+            },
             else => {
                 reader.skip();
             },
@@ -80,12 +83,44 @@ pub fn main() !void {
     }
 }
 
+fn parseScanHeader(reader: *JpgReader) void {
+    print("Scan Header, B.2.3, p.37{s}\n", .{""});
+    const marker = reader.readInt(u16);
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X},  {d: >5}\n", .{ "Marker:", "SOS", "u16", marker, marker });
+    const l_s = reader.readInt(u16);
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Scan header length:", "Ls", "u16", l_s, l_s });
+    const n_s = reader.readInt(u8);
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Number of image comps in scan:", "Ns", "u8", n_s, n_s });
+    //print(" {}", .{" \n"});
+
+    for (0..n_s) |_| {
+        const c_sj = reader.readInt(u8);
+        const t_dj_t_aj = reader.readInt(u8);
+        const t_dj = t_dj_t_aj >> 4;
+        const t_aj = t_dj_t_aj & 0xF;
+        print("    {s: <30}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ "Scan comp selector:", "Csj", "u8", c_sj, c_sj });
+        print("    {s: <30}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ "Entropy coding table dest:", "Tdj", "u4", t_dj, t_dj });
+        print("    {s: <30}  {s: >4},  {s: >3},    0x{X:0>2},  {d: >5}\n", .{ "Zero for lossless:", "Taj", "u4", t_aj, t_aj });
+        //print("{}", "\n");
+    }
+
+    const s_s = reader.readInt(u8);
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Predictor selector:", "Ss", "u8", s_s, s_s });
+    const s_e = reader.readInt(u8);
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Zero for lossless:", "Se", "u8", s_e, s_e });
+    const a_h_a_l = reader.readInt(u8);
+    const a_h = a_h_a_l >> 4;
+    const a_l = a_h_a_l & 0xF;
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Zero for lossless:", "Ah", "u4", a_h, a_h });
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Point Transform, Pt:", "Al", "u4", a_l, a_l });
+}
+
 fn parseHuffmanTable(reader: *JpgReader) void {
     print("Huffman table, B.2.4.2, p.40{s}\n", .{""});
     const marker = reader.readInt(u16);
     print("  {s: <32}  {s: >4},  {s: >3},  0x{X},  {d: >5}\n", .{ "Marker:", "DHT", "u16", marker, marker });
     const l_h = reader.readInt(u16);
-    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Huffman table dedf len:", "Lh", "u16", l_h, l_h });
+    print("  {s: <32}  {s: >4},  {s: >3},  0x{X:0>4},  {d: >5}\n", .{ "Huffman table def len:", "Lh", "u16", l_h, l_h });
     const t_c_t_h = reader.readInt(u8);
     const t_c = t_c_t_h >> 4;
     const t_h = t_c_t_h & 0x0F;
